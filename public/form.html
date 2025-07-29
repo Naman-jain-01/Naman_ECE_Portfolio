@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dynamic Table</title>
+<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: url('assets/img/about/aboutbg.png') no-repeat center center fixed; 
+    background-size: cover;
+  }
+  table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    backdrop-filter: blur(10px); /* Glass effect */
+    background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white */
+  }
+  th, td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+  th {
+    background-color: rgba(0, 0, 0, 0.1); /* Slightly dark transparent background */
+  }
+  button {
+    padding: 10px 20px;
+    margin-right: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  button:hover {
+    background-color: #45a049; /* Darker shade of green on hover */
+  }
+</style>
+</head>
+<body>
+<h2 style="color: aliceblue; font: bold; font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif ;font-size:xx-large;";>Fill Up the Table</h2>
+<table id="dataTable">
+  <tr id="headerRow">
+    <!-- Headers will be loaded here -->
+  </tr>
+</table>
+<br>
+<button onclick="addRow()">Add Row</button>
+<button onclick="submitData()">Submit</button>
+
+<script>
+   document.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('beforeunload', function(event) {
+            navigator.sendBeacon('/cleanup_downloads3', {});
+        });
+    });
+
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/columnfiles/column.txt')
+    .then(response => response.text())
+    .then(data => {
+      const headers = data.split(',');
+      const headerRow = document.getElementById('headerRow');
+      headers.forEach(header => {
+        let th = document.createElement('th');
+        th.innerText = header.trim(); // Ensure no extra spaces
+        headerRow.appendChild(th);
+      });
+      addInitialRow(); 
+    });
+});
+
+function addRow() {
+  const table = document.getElementById("dataTable");
+  const newRow = table.insertRow();
+  Array.from(document.getElementById('headerRow').children).forEach(header => {
+    const cell = newRow.insertCell();
+    const inputName = header.innerText.toLowerCase().replace(/\s+/g, ''); // Remove spaces for input name attribute
+    cell.innerHTML = `<input type="text" name="${inputName}">`;
+  });
+}
+
+// Function to add the first row of input fields
+function addInitialRow() {
+  addRow();
+}
+
+function submitData() {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("My Sheet");
+
+  const headerFont = { name: 'Calibri', family: 4, size: 11, bold: true };
+
+  const table = document.getElementById("dataTable");
+  const rows = table.querySelectorAll("tr");
+
+  // Adding headers to Excel sheet
+  const headerRow = worksheet.addRow(Array.from(rows[0].querySelectorAll("th")).map(header => header.innerText));
+  headerRow.eachCell((cell, number) => {
+    cell.font = headerFont;
+  });
+
+  // Adding data
+  for (let i = 1; i < rows.length; i++) {
+    const dataRow = [];
+    rows[i].querySelectorAll("input").forEach(input => dataRow.push(input.value));
+    worksheet.addRow(dataRow);
+  }
+
+  // Save workbook
+  workbook.xlsx.writeBuffer().then(function(buffer) {
+    saveAs(new Blob([buffer], {type: "application/octet-stream"}), "Data.xlsx");
+    setTimeout(function() {
+        window.close();
+    }, 30000);
+ });
+}
+</script>
+</body>
+</html>
