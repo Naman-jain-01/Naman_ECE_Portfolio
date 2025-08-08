@@ -4,7 +4,7 @@ const app = express();
 const port =4004;
 
 // Serve static files from the public directory
-app.use(express.static('../public'));
+app.use(express.static('../public/index.html'));
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
