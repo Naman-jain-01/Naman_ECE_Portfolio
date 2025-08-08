@@ -12,6 +12,8 @@ const port =4004;
 app.use(bodyParser.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 app.use(bodyParser.json()); // For parsing application/json
 
+app.use(express.static('../public'));
+
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });
